@@ -1,68 +1,56 @@
-from selenium import webdriver 
-from time import sleep
+from selenium import webdriver
 from secrets import url
 import pandas as pd
 
-class search_bot:
+MIN_PAGE = 219
+MAX_PAGE = 290
+
+FIRST_FILTER_MAX = 650
+FIRST_FILTER_MIN = 400
+
+
+class SearchBot:
+
     def __init__(self):
-        # self.df = pd.DataFrame()
+        self.df = pd.DataFrame(columns=['url', 'name', 'views', 'videos'])
+        self.urls = []
+        self.names = []
+        self.views = []
+        self.videos = []
         self.driver = webdriver.Chrome()
-        self.driver.get(url)
-        self.driver.maximize_window()  # importante, sino esta maximizado oculta algunos perfiles
-        # final_list = run()
-        sleep(2)
-        
+        self.driver.maximize_window()
+        self.run()
+
     def run(self):
-        pages = range(290, 219, -1)
-        for page in pages:
-            pass
-        pass    
-        
+        with open('results.csv', 'a+') as f:
+            pages = range(MAX_PAGE, MIN_PAGE, -1)
+            for page in pages:
+                self.driver.get(url.format(page=page))
+                names, videos, views, urls = self.users_per_page()
+
+                for idx, views_count in enumerate(views):
+                    if "K" in views_count and "." not in views_count and self.first_conditional(views_count[:-1]):
+                        f.write('{0},{1},{2},{3}\n'.format(names[idx], views[idx], videos[idx], urls[idx]))
+
     def users_per_page(self):
         # user name
         sel_users = self.driver.find_elements_by_xpath('//a[@class="title js-mxp"]')
         names = [name.text for name in sel_users if name.text != '']
-        
-        
+
         # user videos, views
         sel_info = self.driver.find_elements_by_xpath('//span[@class="videosNumber"]')
         list_info = [data.text for data in sel_info]
         videos_count = [int(video[:2]) for video in list_info]
-        views_count = [views[views.find('Videos ') + 7 : views.find(' views')] 
-                       for views in list_info]
+        views_count = [views[views.find('Videos ') + 7: views.find(' views')] for views in list_info]
 
         # user url
         sel_url = self.driver.find_elements_by_xpath('//a[@class="title js-mxp"]')
-        urls = [url.get_attribute("href") for url in sel_url] 
-        
-        return names, videos_count, views_count, urls 
-    
-    
-    def first_conditional(self, profile_information):
-        pass
-    
+        urls = [url.get_attribute("href") for url in sel_url]
 
-    
-    def save_all(self, sel_obj):
-        pass
-    
-       
-    def previous_page(self):
-        self.driver.find_element_by_xpath('//li[@class="page_previous alpha"]')\
-            .click()        
-         
-        
-        
+        return names, videos_count, views_count, urls
 
-        
-        
-        
-        
-bot = search_bot()
-names, videos, views, urls = bot.users_per_page()
+    def first_conditional(self, count):
+        return FIRST_FILTER_MIN <= int(count) <= FIRST_FILTER_MAX
 
-    # def check_gender(self, gender_information):
-    #     # window_before = driver.window_handles[0]
-    #     # window_after = driver.window_handles[1]
-    #     # driver.switch_to.window(window_after)
-    #     pass
+
+bot = SearchBot()
