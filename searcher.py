@@ -1,6 +1,5 @@
 from selenium import webdriver
 from secrets import url
-import pandas as pd
 
 MIN_PAGE = 219
 MAX_PAGE = 290
@@ -12,11 +11,6 @@ FIRST_FILTER_MIN = 400
 class SearchBot:
 
     def __init__(self):
-        self.df = pd.DataFrame(columns=['url', 'name', 'views', 'videos'])
-        self.urls = []
-        self.names = []
-        self.views = []
-        self.videos = []
         self.driver = webdriver.Chrome()
         self.driver.maximize_window()
         self.run()
